@@ -4,7 +4,7 @@ My desktop configs for both machines: a **CachyOS** box running niri + Noctalia,
 **Windows** box running an AutoHotkey window manager + PowerToys.
 
 ```
-cachyos/    niri compositor, Noctalia shell, nirimod, generated app themes
+cachyos/    niri compositor, Noctalia shell, nirimod, generated app themes, setup.sh
 windows/    AutoHotkey v2 window manager, VD.ah2 library, PowerToys backup, Setup.ps1
 ```
 
@@ -13,6 +13,52 @@ windows/    AutoHotkey v2 window manager, VD.ah2 library, PowerToys backup, Setu
 ## CachyOS setup
 
 See [`cachyos/README.md`](cachyos/README.md) for the full file-by-file map of what came from where.
+
+### Quick start: `setup.sh`
+
+```fish
+cd cachyos
+./setup.sh
+```
+
+It installs `niri` (pacman) and `noctalia-shell` (paru/yay), backs up anything already
+in place, copies the configs in, **generates a monitor layout for the machine you are
+on**, points the wallpaper directory at somewhere that exists, checks the apps the
+keybinds expect, and finishes by running `niri validate` on the result.
+
+| Flag | Effect |
+| --- | --- |
+| `--no-install` | Skip pacman/paru, just wire up configs |
+| `--dry-run` | Print what it would do, change nothing |
+| `--wallpapers DIR` | Use `DIR` instead of auto-detecting |
+
+Safe to re-run: files that already match are left alone, and it will not re-save a backup
+identical to one it already has.
+
+### Monitors: `gen-outputs.sh`
+
+The monitor layout is the least portable part of a niri config — output names, exact
+refresh rates and pixel positions are all specific to one desk. So it lives in its own
+`outputs.kdl`, which `config.kdl` pulls in with `include`, and which this script writes:
+
+```fish
+cd cachyos
+./gen-outputs.sh            # writes ~/.config/niri/outputs.kdl
+./gen-outputs.sh --stdout   # just print it
+```
+
+Run it inside a niri session — it reads `niri msg --json outputs`, so it captures the
+monitors as they are actually connected and arranged right now. Re-run it whenever you
+plug in, unplug, or rearrange a monitor.
+
+> **`outputs.kdl` must exist.** A missing `include` target is a hard config error — niri
+> refuses to load the config at all, not just the output block. `setup.sh` always writes
+> the file, falling back to a comments-only placeholder (which means "auto-detect") when
+> it can't reach a running niri. If you delete it by hand, niri will not start.
+
+### Doing it by hand
+
+The rest of this section is what `setup.sh` automates.
 
 ### 1. Install the pieces
 
@@ -34,6 +80,7 @@ mkdir -p ~/.config/niri ~/.local/state/noctalia ~/.config/nirimod
 
 cp cachyos/niri/config.kdl        ~/.config/niri/
 cp cachyos/niri/noctalia.kdl      ~/.config/niri/
+cp cachyos/niri/outputs.kdl       ~/.config/niri/   # required - see above
 cp cachyos/noctalia/settings.toml ~/.local/state/noctalia/
 cp cachyos/noctalia/state.toml    ~/.local/state/noctalia/
 cp cachyos/nirimod/settings.json  ~/.config/nirimod/
@@ -45,13 +92,15 @@ cp -r cachyos/nirimod/baseline    ~/.config/nirimod/
 
 ### 3. Fix the machine-specific bits
 
-Two things in `settings.toml` are specific to my hardware and will need editing:
-
-- **Monitors** — the configs name `DP-2` and `HDMI-A-1`. Run `niri msg outputs` to see
-  yours, then search-and-replace. The lockscreen widget block has one entry per monitor.
+- **Monitors** — run `./gen-outputs.sh` inside niri to rewrite `outputs.kdl`. The
+  Noctalia lockscreen widgets in `settings.toml` also name `DP-2`/`HDMI-A-1`, but that
+  block is `enabled = false`, so stale names there are inert.
 - **Wallpapers** — `[wallpaper]` points at `/mnt/hdd/MEGA/Pictures/Catgirls`. Point
   `directory` at your own folder and clear the `path` entries, or Noctalia will show a blank
   background until you pick a new wallpaper.
+- **Apps** — the keybinds spawn `ghostty` (Mod+T), `brave` (Mod+B), `cosmic-files` (Mod+F)
+  and `btop` (Ctrl+Shift+Esc) by name. If you use something else, edit those `spawn` lines;
+  a missing binary just makes the key do nothing.
 
 ### 4. Log in and regenerate themes
 
