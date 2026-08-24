@@ -10,3 +10,6 @@ plugins/
 
 # nirimod rolling backups
 backups/
+
+# AutoHotkey
+*.exe
