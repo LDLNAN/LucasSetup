@@ -106,8 +106,25 @@ Settings → General → Backup & restore → Restore.
 | `-ApplyDirect` | Write settings straight into PowerToys' live folder instead of leaving a `.ptb` to restore by hand. Stops PowerToys, backs up the existing settings first, then restarts it |
 | `-NoStartup` | Don't create the Startup shortcut |
 
-Re-running it is safe. If you install Brave after the fact, `.\Setup.ps1 -SkipInstall`
-will pick up the new path and produce a corrected backup.
+#### Re-running it
+
+Every step is safe to repeat — nothing errors out because it was already done:
+
+| Step | On a second run |
+| --- | --- |
+| winget installs | Checked with `winget list` first and skipped. A failed check is harmless — winget just reports "already installed" and the script continues |
+| Path detection | Read-only |
+| NewPlus folder | Created only if missing |
+| Patched `.ptb` | Fixed filename, overwritten each run — no clutter, and the name to pick in the restore dialog never changes |
+| Startup shortcut | Overwritten in place |
+| `WindowManager.ahk` | Relaunched; `#SingleInstance Force` replaces the running copy |
+| `-ApplyDirect` | Copies the current settings to `...\Microsoft\PowerToys.before-lucassetup-<timestamp>` before overwriting, so each run leaves another rollback point. Delete old ones by hand |
+
+The one step that is *not* tracked is the PowerToys restore itself — the script has no way
+to tell whether you clicked Restore, so it will re-patch and ask again. Harmless.
+
+If you install Brave after the fact, `.\Setup.ps1 -SkipInstall` picks up the new path and
+rewrites the backup.
 
 **Keep the repo folder where it is** — the Startup shortcut points at it by path.
 

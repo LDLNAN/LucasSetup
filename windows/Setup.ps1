@@ -263,8 +263,9 @@ $replacements[$OldWinDir]    = $env:WINDIR
 $backupDir = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'PowerToys\Backup'
 if (-not (Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir -Force | Out-Null }
 
-$stamp     = Get-Date -Format 'yyyyMMddHHmmss'
-$destPtb   = Join-Path $backupDir "settings_lucassetup_$stamp.ptb"
+# Fixed name, overwritten each run, so repeat runs don't litter the backup folder
+# and the filename you pick in the restore dialog stays the same.
+$destPtb   = Join-Path $backupDir 'settings_lucassetup.ptb'
 $sourcePtb = Join-Path $ScriptDir 'powertoys-settings.ptb'
 
 $patched = @(Update-PowerToysBackup -SourcePtb $sourcePtb -DestPtb $destPtb -Replacements $replacements)
@@ -284,8 +285,10 @@ if ($ApplyDirect) {
     $wasRunning = Expand-IntoLiveSettings -Ptb $destPtb -SettingsRoot $settingsRoot
     Write-Ok "settings written to $settingsRoot"
     if ($wasRunning) {
-        $ptExe = "$env:ProgramFiles\PowerToys\PowerToys.exe"
-        if (Test-Path $ptExe) { Start-Process $ptExe; Write-Ok 'PowerToys restarted' }
+        $ptExe = @("$env:ProgramFiles\PowerToys\PowerToys.exe",
+                   "$env:LOCALAPPDATA\PowerToys\PowerToys.exe") |
+                 Where-Object { Test-Path $_ } | Select-Object -First 1
+        if ($ptExe) { Start-Process $ptExe; Write-Ok 'PowerToys restarted' }
         else { Write-Warn  'start PowerToys manually' }
     }
 } else {
@@ -319,15 +322,14 @@ if ($NoStartup) {
     $sc.Save()
     Write-Ok "startup shortcut -> $lnk"
 
-    if (-not (Get-Process AutoHotkey* -ErrorAction SilentlyContinue)) {
-        if ($ahkExe) {
-            Start-Process $ahkExe -ArgumentList "`"$ahkScript`"" -WorkingDirectory $ScriptDir
-            Write-Ok 'WindowManager.ahk started'
-        } else {
-            Write-Warn  'AutoHotkey v2 not found - start WindowManager.ahk by hand'
-        }
+    # WindowManager.ahk is #SingleInstance Force, so launching again just replaces
+    # any running copy. Don't guard on Get-Process - that matches unrelated AHK
+    # scripts too and would leave the window manager not running.
+    if ($ahkExe) {
+        Start-Process $ahkExe -ArgumentList "`"$ahkScript`"" -WorkingDirectory $ScriptDir
+        Write-Ok 'WindowManager.ahk started (replacing any running copy)'
     } else {
-        Write-Info 'an AutoHotkey process is already running - not starting another'
+        Write-Warn  'AutoHotkey v2 not found - start WindowManager.ahk by hand'
     }
 }
 
