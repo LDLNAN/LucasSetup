@@ -5,7 +5,7 @@ My desktop configs for both machines: a **CachyOS** box running niri + Noctalia,
 
 ```
 cachyos/    niri compositor, Noctalia shell, nirimod, generated app themes
-windows/    AutoHotkey v2 window manager, VD.ah2 library, PowerToys settings backup
+windows/    AutoHotkey v2 window manager, VD.ah2 library, PowerToys backup, Setup.ps1
 ```
 
 ---
@@ -71,6 +71,48 @@ the palette produced.
 Two independent layers that work together: AutoHotkey does the window/desktop management,
 PowerToys provides FancyZones and remaps the awkward hotkeys into comfortable ones.
 
+### Quick start: `Setup.ps1`
+
+`windows/Setup.ps1` does the whole thing. Open PowerShell in the `windows\` folder:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\Setup.ps1
+```
+
+It will:
+
+1. **Install** Brave, AutoHotkey v2, Windows Terminal and PowerToys via `winget`
+   (skipping anything already present).
+2. **Detect** where they actually landed on this machine — Brave via the
+   `App Paths` registry key first, then the usual per-user and Program Files
+   locations — plus your real `%LOCALAPPDATA%` and `%WINDIR%`.
+3. **Rewrite** the machine-specific paths baked into `powertoys-settings.ptb` and
+   write a patched copy into `Documents\PowerToys\Backup`. The JSON is re-validated
+   after patching, so a bad rewrite fails loudly instead of producing a backup
+   PowerToys silently rejects.
+4. **Create** the NewPlus templates folder if it does not exist yet.
+5. **Wire up** AutoHotkey: a Startup shortcut pointing at `WindowManager.ahk` with its
+   working directory set to the repo folder (the script `#Include`s `VD.ah2` from
+   there), then starts it.
+
+The one thing it does not automate is the PowerToys restore itself — that is a GUI
+action. The script prints the exact filename to pick in
+Settings → General → Backup & restore → Restore.
+
+| Flag | Effect |
+| --- | --- |
+| `-SkipInstall` | Skip `winget` entirely; just detect, patch and wire up |
+| `-ApplyDirect` | Write settings straight into PowerToys' live folder instead of leaving a `.ptb` to restore by hand. Stops PowerToys, backs up the existing settings first, then restarts it |
+| `-NoStartup` | Don't create the Startup shortcut |
+
+Re-running it is safe. If you install Brave after the fact, `.\Setup.ps1 -SkipInstall`
+will pick up the new path and produce a corrected backup.
+
+**Keep the repo folder where it is** — the Startup shortcut points at it by path.
+
+The rest of this section is what the script automates, in case you'd rather do it by hand.
+
 ### 1. AutoHotkey window manager
 
 Requires **[AutoHotkey v2](https://www.autohotkey.com/)** — v1 will not run this script.
@@ -133,9 +175,19 @@ So after restoring, `Win+1` switches virtual desktops instead of opening the fir
 app. If you only restore PowerToys without running the AHK script, those remaps will fire
 into nothing.
 
-One path in the Keyboard Manager remaps is machine-specific: `Win+B` launches Brave from
-`C:\Users\lucasdonald\AppData\Local\BraveSoftware\...`. Fix that in
-Settings → Keyboard Manager → Remap shortcuts if your username or install path differs.
+#### Machine-specific paths
+
+Four paths in the backup were captured from the PC it came from. `Setup.ps1` rewrites all
+of them; fix them by hand in PowerToys Settings if you restored the raw `.ptb` yourself:
+
+| Where | Path | Bound to |
+| --- | --- | --- |
+| Keyboard Manager | `...\AppData\Local\BraveSoftware\...\brave.exe` | `Win+B` |
+| Keyboard Manager | `...\AppData\Local\Microsoft\WindowsApps\wt.exe` | `Win+T` |
+| Keyboard Manager | `C:\Windows\explorer.exe` | `Win+F` |
+| NewPlus | `...\AppData\Local\Microsoft\PowerToys\NewPlus\Templates` | template folder |
+
+All four contain the old username `lucasdonald`, except `explorer.exe`.
 
 ---
 
