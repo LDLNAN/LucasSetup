@@ -1,0 +1,12 @@
+# noctalia runtime data — regenerated, not config
+clipboard/
+notification_history.json
+usage_counts.json
+recently_used.json
+wallpaper_shuffle.json
+community-palettes/
+community-templates/
+plugins/
+
+# nirimod rolling backups
+backups/

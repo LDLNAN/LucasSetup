@@ -1,0 +1,174 @@
+config_version = 13
+
+[bar.default]
+border_width = 1.0
+capsule_radius = 4
+center = [ "clock", "notifications" ]
+end = [ "tray", "clipboard", "network", "bluetooth", "volume", "brightness", "battery", "control-center", "session" ]
+font_family = "Inter"
+font_weight = 600
+margin_edge = 6
+margin_ends = 6
+position = "right"
+radius = 8
+scale = 1.2000000104308128
+shadow = false
+start = [ "workspaces", "launcher" ]
+thickness = 36
+widget_spacing = 15
+
+[dock]
+active_monitor_only = true
+border_width = 1.0
+enabled = true
+inactive_opacity = 0.99999997764825821
+inactive_scale = 1.0
+item_spacing = 8
+launcher_position = "start"
+magnification = false
+magnification_scale = 1.2000000029802322
+margin_edge = 8
+radius = 8
+reserve_space = false
+show_dots = true
+smart_auto_hide = true
+
+[lockscreen_widgets]
+enabled = false
+schema_version = 2
+widget_order = [ "lockscreen-login-box@HDMI-A-1", "lockscreen-login-box@DP-2" ]
+
+    [lockscreen_widgets.grid]
+    cell_size = 16
+    major_interval = 4
+    visible = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@DP-2"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "DP-2"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@DP-2".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+    [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1"]
+    box_height = 196.0
+    box_width = 810.0
+    cx = 960.0
+    cy = 898.0
+    output = "HDMI-A-1"
+    placement_height = 1080.0
+    placement_width = 1920.0
+    rotation = 0.0
+    type = "login_box"
+
+        [lockscreen_widgets.widget."lockscreen-login-box@HDMI-A-1".settings]
+        background_color = "surface_variant"
+        background_opacity = 0.88
+        background_radius = 12.0
+        center_password_text = false
+        input_opacity = 1.0
+        input_radius = 6.0
+        layout = "regular"
+        show_caps_lock = true
+        show_keyboard_layout = true
+        show_login_button = true
+        show_media = true
+        show_session_buttons = true
+        show_unlock_hint = true
+        show_weather = true
+
+[notification]
+history_retention_hours = 3
+position = "bottom_right"
+
+[osd.kinds]
+media = false
+
+[shell]
+button_borders = false
+corner_radius_scale = 0.5000000074505806
+niri_overview_type_to_launch_enabled = true
+
+    [shell.animation]
+    speed = 2.0000000298023224
+
+    [shell.launcher]
+    show_app_actions = true
+
+    [shell.panel]
+    control_center_placement = "floating"
+
+[theme]
+builtin = "Gruvbox"
+community_palette = "Cream Autumn"
+mode = "dark"
+source = "community"
+wallpaper_scheme = "muted"
+
+    [theme.templates]
+    builtin_ids = [ "alacritty", "btop", "cava", "gtk3", "gtk4", "ghostty", "kcolorscheme", "kitty", "niri", "qt" ]
+
+[wallpaper]
+directory = "/mnt/hdd/MEGA/Pictures/Catgirls"
+edge_smoothness = 0.0
+
+    [wallpaper.default]
+    path = "/mnt/hdd/MEGA/Pictures/Catgirls/40rbqkw5l54b1.jpg"
+
+    [wallpaper.last]
+    path = "/mnt/hdd/MEGA/Pictures/Catgirls/40rbqkw5l54b1.jpg"
+
+    [wallpaper.monitors.DP-2]
+    path = "/mnt/hdd/MEGA/Pictures/Catgirls/40rbqkw5l54b1.jpg"
+
+    [wallpaper.monitors.HDMI-A-1]
+    path = "/mnt/hdd/MEGA/Pictures/Catgirls/40rbqkw5l54b1.jpg"
+
+    [[wallpaper.favorite]]
+    builtin_palette = "Ayu"
+    palette_source = "builtin"
+    path = "/mnt/hdd/MEGA/Pictures/Catgirls/anime-cat-girl-halloween-pumpkin-head-4k-wallpaper-uhdpaper.com-22@2@b.jpg"
+    theme_mode = "dark"
+
+[widget.battery]
+display_mode = "graphic"
+
+[widget.clipboard]
+enabled = false
+
+[widget.control-center]
+enabled = false
+
+[widget.launcher]
+enabled = false
+
+[widget.network]
+show_label = false
+
+[widget.volume]
+show_label = false
+
+[widget.workspaces]
+active_pill_size = 2.0
+hide_when_empty = true
+show_labels = false
