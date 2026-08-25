@@ -40,30 +40,88 @@ run()  { if [ "$dry_run" -eq 1 ]; then info "would: $*"; else "$@"; fi; }
 
 # ------------------------------------------------------------------ install --
 
+# What the config needs. Columns:
+#   provide | package to install | what it is for
+#
+# The first column is what pacman is *queried* for, not the package name. It
+# matters: `pacman -Qq noctalia-shell` fails on a machine running noctalia-git,
+# even though that package provides noctalia - so querying by package name would
+# reinstall a conflicting second copy. Querying the provide resolves either way.
+read -r -d '' PACKAGES <<'PKGS' || true
+niri|niri|the compositor
+noctalia|noctalia-shell|the shell (bar, dock, lockscreen)
+ghostty|ghostty|Mod+T terminal
+brave|brave-bin|Mod+B browser
+cosmic-files|cosmic-files|Mod+F file manager
+btop|btop|Ctrl+Shift+Esc system monitor
+PKGS
+
 step "Packages"
+
+aur_helper() {
+    local h
+    for h in paru yay; do
+        command -v "$h" >/dev/null 2>&1 && { echo "$h"; return 0; }
+    done
+    return 1
+}
 
 if [ "$do_install" -eq 0 ]; then
     info "skipped (--no-install)"
+    while IFS='|' read -r provide pkg desc; do
+        [ -n "$provide" ] || continue
+        command -v "$provide" >/dev/null 2>&1 \
+            && ok   "$(printf '%-14s ' "$provide")$desc" \
+            || warn "$(printf '%-14s ' "$provide")$desc  - not installed"
+    done <<< "$PACKAGES"
 elif ! command -v pacman >/dev/null 2>&1; then
-    warn "not an Arch-based system - install niri and noctalia-shell yourself"
+    warn "not an Arch-based system - install these yourself:"
+    while IFS='|' read -r provide pkg desc; do
+        [ -n "$provide" ] || continue
+        info "  $(printf '%-14s ' "$provide")$desc"
+    done <<< "$PACKAGES"
 else
-    need_repo=()
-    for p in niri; do
-        pacman -Qq "$p" >/dev/null 2>&1 && ok "$p already installed" || need_repo+=("$p")
-    done
-    [ ${#need_repo[@]} -gt 0 ] && run sudo pacman -S --needed --noconfirm "${need_repo[@]}"
+    from_repo=()
+    from_aur=()
 
-    if pacman -Qq noctalia-shell >/dev/null 2>&1; then
-        ok "noctalia-shell already installed"
-    else
-        helper=""
-        for h in paru yay; do command -v "$h" >/dev/null 2>&1 && { helper="$h"; break; }; done
-        if [ -n "$helper" ]; then
-            run "$helper" -S --needed --noconfirm noctalia-shell
+    while IFS='|' read -r provide pkg desc; do
+        [ -n "$provide" ] || continue
+
+        # Query the provide so a -git or -bin variant counts as satisfying it.
+        if installed=$(pacman -Qq "$provide" 2>/dev/null | head -1) && [ -n "$installed" ]; then
+            if [ "$installed" = "$pkg" ]; then
+                ok "$(printf '%-14s ' "$provide")already installed"
+            else
+                ok "$(printf '%-14s ' "$provide")satisfied by $installed"
+            fi
+            continue
+        fi
+
+        # Prefer a repo package; fall back to the AUR only when there isn't one.
+        if pacman -Si "$pkg" >/dev/null 2>&1; then
+            from_repo+=("$pkg")
+            info "$(printf '%-14s ' "$provide")will install $pkg (repo)"
         else
-            warn "no AUR helper (paru/yay) - install noctalia-shell manually"
+            from_aur+=("$pkg")
+            info "$(printf '%-14s ' "$provide")will install $pkg (AUR)"
+        fi
+    done <<< "$PACKAGES"
+
+    if [ ${#from_repo[@]} -gt 0 ]; then
+        run sudo pacman -S --needed --noconfirm "${from_repo[@]}"
+        [ "$dry_run" -eq 0 ] && ok "installed from repos: ${from_repo[*]}"
+    fi
+
+    if [ ${#from_aur[@]} -gt 0 ]; then
+        if helper=$(aur_helper); then
+            run "$helper" -S --needed --noconfirm "${from_aur[@]}"
+            [ "$dry_run" -eq 0 ] && ok "installed from AUR: ${from_aur[*]}"
+        else
+            warn "no AUR helper (paru/yay) - install manually: ${from_aur[*]}"
         fi
     fi
+
+    [ ${#from_repo[@]} -eq 0 ] && [ ${#from_aur[@]} -eq 0 ] && info "nothing to install"
 fi
 
 # ------------------------------------------------------------------- backup --
@@ -207,24 +265,20 @@ fi
 
 step "Applications the keybinds expect"
 
-missing=()
-while IFS='|' read -r bin desc; do
-    if command -v "$bin" >/dev/null 2>&1; then
-        ok "$(printf '%-14s' "$bin")$desc"
+still_missing=()
+while IFS='|' read -r provide pkg desc; do
+    [ -n "$provide" ] || continue
+    if command -v "$provide" >/dev/null 2>&1; then
+        ok "$(printf '%-14s ' "$provide")$desc"
     else
-        warn "$(printf '%-14s' "$bin")$desc  - NOT INSTALLED"
-        missing+=("$bin")
+        warn "$(printf '%-14s ' "$provide")$desc  - still missing"
+        still_missing+=("$provide")
     fi
-done <<'APPS'
-noctalia|the shell itself (bar, dock, lockscreen)
-ghostty|Mod+T terminal
-brave|Mod+B browser
-cosmic-files|Mod+F file manager
-btop|Ctrl+Shift+Esc system monitor
-APPS
+done <<< "$PACKAGES"
 
-if [ ${#missing[@]} -gt 0 ]; then
-    info "install them, or edit the spawn lines in $NIRI_DIR/config.kdl"
+if [ ${#still_missing[@]} -gt 0 ]; then
+    info "a missing binary just makes its keybind do nothing;"
+    info "install it, or edit the spawn line in $NIRI_DIR/config.kdl"
 fi
 
 # ---------------------------------------------------------------- validate ---

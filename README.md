@@ -21,14 +21,33 @@ cd cachyos
 ./setup.sh
 ```
 
-It installs `niri` (pacman) and `noctalia-shell` (paru/yay), backs up anything already
-in place, copies the configs in, **generates a monitor layout for the machine you are
-on**, points the wallpaper directory at somewhere that exists, checks the apps the
-keybinds expect, and finishes by running `niri validate` on the result.
+It installs everything the config needs, backs up anything already in place, copies the
+configs in, **generates a monitor layout for the machine you are on**, points the
+wallpaper directory at somewhere that exists, and finishes by running `niri validate`
+on the result.
+
+Packages installed — the apps the keybinds spawn are included, so no key is left dead:
+
+| Needed | Package | For |
+| --- | --- | --- |
+| `niri` | `niri` (repo) | the compositor |
+| `noctalia` | `noctalia-shell` (repo) | the shell — bar, dock, lockscreen |
+| `ghostty` | `ghostty` (repo) | `Mod+T` terminal |
+| `brave` | `brave-bin` (AUR) | `Mod+B` browser |
+| `cosmic-files` | `cosmic-files` (repo) | `Mod+F` file manager |
+| `btop` | `btop` (repo) | `Ctrl+Shift+Esc` system monitor |
+
+Repo packages go through `pacman`; anything not in the repos falls back to `paru`/`yay`.
+Both run with `--noconfirm`, so AUR builds are installed **without a PKGBUILD review** —
+use `--no-install` and install by hand if you would rather look first.
+
+Detection is by *provide*, not package name, so a variant you already run counts and is
+left alone — on a machine with `niri-tearing-git` and `noctalia-git` it reports
+`satisfied by niri-tearing-git` and installs nothing.
 
 | Flag | Effect |
 | --- | --- |
-| `--no-install` | Skip pacman/paru, just wire up configs |
+| `--no-install` | Skip pacman/paru, just wire up configs (still reports what's missing) |
 | `--dry-run` | Print what it would do, change nothing |
 | `--wallpapers DIR` | Use `DIR` instead of auto-detecting |
 
@@ -99,8 +118,8 @@ cp -r cachyos/nirimod/baseline    ~/.config/nirimod/
   `directory` at your own folder and clear the `path` entries, or Noctalia will show a blank
   background until you pick a new wallpaper.
 - **Apps** — the keybinds spawn `ghostty` (Mod+T), `brave` (Mod+B), `cosmic-files` (Mod+F)
-  and `btop` (Ctrl+Shift+Esc) by name. If you use something else, edit those `spawn` lines;
-  a missing binary just makes the key do nothing.
+  and `btop` (Ctrl+Shift+Esc) by name; `setup.sh` installs all four. If you prefer
+  something else, edit those `spawn` lines — a missing binary just makes the key do nothing.
 
 ### 4. Log in and regenerate themes
 
