@@ -37,9 +37,10 @@ Packages installed — the apps the keybinds spawn are included, so no key is le
 | `cosmic-files` | `cosmic-files` (repo) | `Mod+F` file manager |
 | `btop` | `btop` (repo) | `Ctrl+Shift+Esc` system monitor |
 
-Repo packages go through `pacman`; anything not in the repos falls back to `paru`/`yay`.
-Both run with `--noconfirm`, so AUR builds are installed **without a PKGBUILD review** —
-use `--no-install` and install by hand if you would rather look first.
+Repo packages go through `pacman --noconfirm`. Anything not in the repos falls back to
+`paru`/`yay` and **prompts**, so you get to read the PKGBUILD before an AUR package builds
+on your machine — in practice that's just `brave-bin`. Pass `--yes-aur` to skip those
+prompts for an unattended run.
 
 Detection is by *provide*, not package name, so a variant you already run counts and is
 left alone — on a machine with `niri-tearing-git` and `noctalia-git` it reports
@@ -50,6 +51,7 @@ left alone — on a machine with `niri-tearing-git` and `noctalia-git` it report
 | `--no-install` | Skip pacman/paru, just wire up configs (still reports what's missing) |
 | `--dry-run` | Print what it would do, change nothing |
 | `--wallpapers DIR` | Use `DIR` instead of auto-detecting |
+| `--yes-aur` | Don't prompt for AUR builds either (unattended) |
 
 Safe to re-run: files that already match are left alone, and it will not re-save a backup
 identical to one it already has.

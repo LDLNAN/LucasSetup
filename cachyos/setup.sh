@@ -9,6 +9,7 @@
 #   ./setup.sh --no-install     # skip pacman/paru, just wire up configs
 #   ./setup.sh --dry-run        # show what it would do
 #   ./setup.sh --wallpapers DIR # use DIR for wallpapers
+#   ./setup.sh --yes-aur        # don't prompt for AUR builds either
 
 set -euo pipefail
 
@@ -20,12 +21,14 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 do_install=1
 dry_run=0
 wallpapers=""
+aur_noconfirm=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --no-install) do_install=0; shift ;;
         --dry-run)    dry_run=1; shift ;;
         --wallpapers) wallpapers="$2"; shift 2 ;;
+        --yes-aur)    aur_noconfirm=1; shift ;;
         -h|--help)    sed -n '2,12p' "$0" | sed 's/^# \?//'; exit 0 ;;
         *) echo "unknown argument: $1" >&2; exit 2 ;;
     esac
@@ -114,7 +117,15 @@ else
 
     if [ ${#from_aur[@]} -gt 0 ]; then
         if helper=$(aur_helper); then
-            run "$helper" -S --needed --noconfirm "${from_aur[@]}"
+            # AUR packages build from a PKGBUILD, so let the helper prompt and
+            # show it. --yes-aur skips that for unattended runs.
+            if [ "$aur_noconfirm" -eq 1 ]; then
+                run "$helper" -S --needed --noconfirm "${from_aur[@]}"
+            else
+                info "$helper will prompt you - review the PKGBUILD before confirming"
+                info "(pass --yes-aur to skip these prompts)"
+                run "$helper" -S --needed "${from_aur[@]}"
+            fi
             [ "$dry_run" -eq 0 ] && ok "installed from AUR: ${from_aur[*]}"
         else
             warn "no AUR helper (paru/yay) - install manually: ${from_aur[*]}"
